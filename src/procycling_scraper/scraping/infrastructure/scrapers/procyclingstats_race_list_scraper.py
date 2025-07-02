@@ -1,62 +1,113 @@
-from typing import List
+from typing import Dict, List, Set, Tuple
+
 import requests
 from bs4 import BeautifulSoup, Tag
 
 from procycling_scraper.scraping.application.ports.race_list_scraper import RaceListScraper
+from procycling_scraper.scraping.domain.entities.race import RaceType
 
 
 class ProCyclingStatsRaceListScraper(RaceListScraper):
+    # WorldTour, World/Continental Champs, ProSeries, Europe Tour
+    CIRCUIT_IDS = ["1", "2", "26", "13"]
 
     def __init__(self, base_url: str = "https://www.procyclingstats.com"):
         self._base_url = base_url
 
-    def scrape(self, year: int) -> List[str]:
-        """
-        Scrapes procyclingstats.com for all UCI race URLs in a given year.
-        """
-        target_url = (
-            f"{self._base_url}/races.php?season={year}&month=&category=1"
-            "&racelevel=&pracelevel=smallerorequal&racenation=&class="
-            "&filter=Filter&p=uci&s=calendar-plus-filters"
-        )
-        print(f"Fetching race list from: {target_url}")
+    def scrape(self, year: int) -> List[Tuple[str, RaceType]]:
+        print(f"--- Scraping Race List for {year} ---")
+        unique_races: Set[Tuple[str, RaceType]] = set()
 
-        try:
-            response = requests.get(target_url, timeout=10)
-            response.raise_for_status()
-        except requests.exceptions.RequestException as e:
-            print(f"Error fetching URL {target_url}: {e}")
-            return []
+        for circuit_id in self.CIRCUIT_IDS:
+            target_url = f"{self._base_url}/races.php?year={year}&circuit={circuit_id}&filter=Filter"
+            print(f"Fetching races from circuit URL: {target_url}")
 
-        soup = BeautifulSoup(response.text, 'lxml')
+            try:
+                response = requests.get(target_url, timeout=10)
+                response.raise_for_status()
+            except requests.exceptions.RequestException as e:
+                print(
+                    f"WARN: Could not fetch URL {target_url}: {e}. Skipping circuit.")
+                continue
 
-        table = soup.find("table", class_="basic")
-        if not isinstance(table, Tag):
-            print("ERROR: No se encontró la tabla de resultados en la página.")
-            return []
+            soup = BeautifulSoup(response.text, 'lxml')
 
-        urls = set()
-        for link in table.find_all("a", href=lambda href: isinstance(href, str) and href.startswith("race/")):
-            if isinstance(link, Tag):
-                href = link.get("href")
-                full_url = f"{self._base_url}/{href}"
-                urls.add(full_url)
+            table = soup.select_one('table[class*="basic"]')
+            if not isinstance(table, Tag):
+                print(
+                    f"WARN: No races table found for circuit {circuit_id}. Skipping.")
+                continue
 
-        print(f"Found {len(urls)} unique race URLs for {year}.")
-        return list(urls)
+            try:
+                thead = table.find("thead")
+                if not isinstance(thead, Tag):
+                    continue
+
+                header_tags = thead.find_all("th")
+                headers = [h.text.strip() for h in header_tags]
+
+                header_map: Dict[str, int] = {
+                    "race": headers.index("Race"),
+                    "class": headers.index("Class")
+                }
+            except (ValueError, AttributeError):
+                print(
+                    f"WARN: Could not find required headers in table for circuit {circuit_id}. Skipping.")
+                continue
+
+            tbody = table.find("tbody")
+            if not isinstance(tbody, Tag):
+                continue
+
+            for row in tbody.find_all("tr"):
+                if not isinstance(row, Tag):
+                    continue
+
+                cells = row.find_all("td")
+                if len(cells) <= max(header_map.values()):
+                    continue
+
+                class_cell_text = cells[header_map["class"]].text.strip()
+                race_type = RaceType.STAGE_RACE if class_cell_text.startswith(
+                    "2.") else RaceType.ONE_DAY
+
+                link_cell = cells[header_map["race"]]
+                if not isinstance(link_cell, Tag):
+                    continue
+
+                link_tag = link_cell.find("a")
+                if not isinstance(link_tag, Tag):
+                    continue
+
+                href_value = link_tag.get("href")
+                if not isinstance(href_value, str):
+                    continue
+
+                base_race_url = href_value
+                unique_races.add((base_race_url, race_type))
+
+        print(
+            f"--- Found {len(unique_races)} total unique races for {year} ---")
+        return list(unique_races)
 
 
-# To test the script
 if __name__ == "__main__":
     scraper = ProCyclingStatsRaceListScraper()
-    scraped_urls = scraper.scrape(year=2024)
+    races_to_scrape = scraper.scrape(year=2024)
 
-    if scraped_urls:
-        print("\n--- Scraping Test Results ---")
-        print(f"Successfully found {len(scraped_urls)} URLs.")
-        print("First 5 URLs found:")
-        for url in scraped_urls[:5]:
+    if races_to_scrape:
+        print("\n--- Race List Scraping Test Results ---")
+        one_day_races = len(
+            [r for r, t in races_to_scrape if t == RaceType.ONE_DAY])
+        stage_races = len(
+            [r for r, t in races_to_scrape if t == RaceType.STAGE_RACE])
+        print(
+            f"Found {one_day_races} One-Day races and {stage_races} Stage races.")
+
+        print("\nFirst 5 stage race URLs found:")
+        stage_race_urls = [url for url,
+                           t in races_to_scrape if t == RaceType.STAGE_RACE]
+        for url in stage_race_urls[:5]:
             print(f"- {url}")
     else:
-        print("\n--- Scraping Test Results ---")
-        print("Scraping did not return any URLs. Please check for errors above.")
+        print("Scraping did not return any race URLs.")
