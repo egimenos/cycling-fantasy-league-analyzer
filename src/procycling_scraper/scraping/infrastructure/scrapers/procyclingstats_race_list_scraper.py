@@ -1,3 +1,4 @@
+import re
 from typing import Dict, List, Set, Tuple
 
 import requests
@@ -83,7 +84,8 @@ class ProCyclingStatsRaceListScraper(RaceListScraper):
                 if not isinstance(href_value, str):
                     continue
 
-                base_race_url = href_value
+                base_race_url = re.sub(
+                    r"/(gc|result|results)$", "", href_value)
                 unique_races.add((base_race_url, race_type))
 
         print(
