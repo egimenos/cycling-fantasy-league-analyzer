@@ -15,6 +15,7 @@ from procycling_scraper.scraping.domain.value_objects.result_line import ResultL
 class ProCyclingStatsRaceDataScraper(RaceDataScraper):
     def __init__(self, base_url: str = "https://www.procyclingstats.com"):
         self._base_url = base_url
+    # ... (los métodos scrape, _scrape_one_day_race, _scrape_stage_race, _extract_classification_urls, _parse_select_menu_options, _get_page_soup, y _scrape_race_details NO cambian) ...
 
     def scrape(self, race_info: Tuple[str, RaceType]) -> ScrapedRaceData:
         base_race_url_path = re.sub(r"/(gc|result|results)$", "", race_info[0])
@@ -82,28 +83,21 @@ class ProCyclingStatsRaceDataScraper(RaceDataScraper):
         return []
 
     def _parse_select_menu_options(self, select_menu: Tag) -> List[Tuple[str, ClassificationType, Optional[int]]]:
-        """Helper function to parse the options of a given <select> menu tag."""
         urls_to_scrape = []
         for option in select_menu.find_all("option"):
             if not isinstance(option, Tag) or not option.has_attr("value"):
                 continue
-
             value_attr = option["value"]
             if not isinstance(value_attr, str) or not value_attr:
                 continue
-
-            url_path = value_attr
-            option_text = option.text.lower()
-
+            url_path, option_text = value_attr, option.text.lower()
             if "teams" in url_path or "youth" in url_path:
                 continue
-
             stage_num_match = re.search(r"stage-(\d+)", url_path)
             if "stage-" in url_path and stage_num_match and "points" not in url_path and "kom" not in url_path:
                 urls_to_scrape.append(
                     (url_path, ClassificationType.STAGE, int(stage_num_match.group(1))))
                 continue
-
             if "points classification" in option_text:
                 urls_to_scrape.append(
                     (url_path, ClassificationType.POINTS, None))
@@ -112,7 +106,6 @@ class ProCyclingStatsRaceDataScraper(RaceDataScraper):
             elif "final gc" in option_text:
                 urls_to_scrape.append(
                     (url_path, ClassificationType.GENERAL, None))
-
         return urls_to_scrape
 
     def _get_page_soup(self, url: str) -> Optional[BeautifulSoup]:
@@ -156,14 +149,20 @@ class ProCyclingStatsRaceDataScraper(RaceDataScraper):
                 raise ValueError("Table head not found")
             header_tags = thead.find_all("th")
             team_headers = ["Team", "Tm"]
-            uci_header, rider_header = "UCI", "Rider"
+            # --- CAMBIO AQUÍ ---
+            points_header = "Pnt"  # Antes era "UCI"
+            rider_header = "Rider"
             headers = [h.text.strip() for h in header_tags]
             team_header_found = next(
                 (th for th in team_headers if th in headers), None)
             if not team_header_found:
                 raise ValueError("Team header not found")
-            header_map: Dict[str, int] = {"Rider": headers.index(rider_header), "Team": headers.index(
-                team_header_found), "UCI": headers.index(uci_header)}
+            header_map: Dict[str, int] = {
+                "Rider": headers.index(rider_header),
+                "Team": headers.index(team_header_found),
+                # --- CAMBIO AQUÍ ---
+                "Pnt": headers.index(points_header)
+            }
         except (ValueError, AttributeError):
             print(
                 f"WARN: Could not find required headers in results table for {classification_type.value}. Skipping.")
@@ -188,14 +187,16 @@ class ProCyclingStatsRaceDataScraper(RaceDataScraper):
         if len(cells) <= max(header_map.values()):
             return None
         try:
-            uci_points_text = cells[header_map["UCI"]].text.strip()
-            uci_points_str = uci_points_text.split(
-            )[0] if uci_points_text else "0"
-            uci_points = int(uci_points_str)
-            if uci_points <= 0:
+            # --- CAMBIO AQUÍ ---
+            pcs_points_text = cells[header_map["Pnt"]].text.strip()
+            pcs_points_str = pcs_points_text.split(
+            )[0] if pcs_points_text else "0"
+            pcs_points = int(pcs_points_str)
+            if pcs_points <= 0:
                 return None
         except (ValueError, IndexError):
             return None
+
         rider_cell = cells[header_map["Rider"]]
         if not isinstance(rider_cell, Tag):
             return None
@@ -208,15 +209,22 @@ class ProCyclingStatsRaceDataScraper(RaceDataScraper):
         rider_pcs_id = href_value
         rider_name = rider_link.text.strip()
         rider = Rider(pcs_id=rider_pcs_id, name=rider_name)
+
         team_name = cells[header_map["Team"]].text.strip()
+
         result_line = ResultLine(
-            rider_pcs_id=rider.pcs_id, team_name=team_name, uci_points=uci_points)
+            rider_pcs_id=rider.pcs_id,
+            team_name=team_name,
+            # --- CAMBIO AQUÍ ---
+            pcs_points=pcs_points
+        )
         return rider, result_line
 
 
+# --- BLOQUE DE PRUEBA ACTUALIZADO ---
 if __name__ == "__main__":
     from procycling_scraper.scraping.infrastructure.scrapers.procyclingstats_race_list_scraper import ProCyclingStatsRaceListScraper
-    BASE_URL, YEAR_TO_SCRAPE = "https://www.procyclingstats.com", 2024
+    BASE_URL, YEAR_TO_SCRAPE = "https://www.procyclingstats.com", 2023
 
     def print_scraped_data(title: str, data: ScrapedRaceData):
         print(f"\n--- {title} ---")
@@ -238,13 +246,15 @@ if __name__ == "__main__":
                 pass
         for classification in data.race.classifications:
             key = f"{classification.classification_type.value}-{classification.stage_number}" if classification.stage_number else classification.classification_type.value
-            url_info = classification_details.get(key, 'N/A')
+            url = classification_details.get(key, 'N/A')
             stage_info = f" (Stage {classification.stage_number})" if classification.stage_number else ""
             print(
-                f"  - Classification '{classification.classification_type.value}{stage_info}': Found {len(classification.results)} riders with points. | URL: {url_info}")
+                f"  - Classification '{classification.classification_type.value}{stage_info}': Found {len(classification.results)} riders with points. | URL: {url}")
             for result in classification.results[:5]:
+                # --- CAMBIO AQUÍ ---
                 print(
-                    f"    -> Rider: {result.rider_pcs_id}, Points: {result.uci_points}")
+                    f"    -> Rider: {result.rider_pcs_id}, Points: {result.pcs_points}")
+
     list_scraper = ProCyclingStatsRaceListScraper()
     races_to_scrape = list_scraper.scrape(year=YEAR_TO_SCRAPE)
     stage_race_info = next(
