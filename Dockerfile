@@ -12,4 +12,4 @@ COPY src/ ./src
 
 RUN pip install -e .
 
-CMD ["python", "-m", "src.main", "--help"]
+CMD ["tail", "-f", "/dev/null"]
