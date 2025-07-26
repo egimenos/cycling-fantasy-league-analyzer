@@ -2,24 +2,33 @@ version: '3.8'
 
 services:
   app:
+    container_name: procycling-scraper-app
     build: .
     volumes:
       - ./src:/app/src
-    depends_on:
-      - db
     environment:
       - DATABASE_URL=postgresql://user:password@db:5432/procyclingdb
+    depends_on:
+      - db
+    networks:
+      - procycling-net
+    command: tail -f /dev/null
 
   db:
-    image: postgres:13
-    volumes:
-      - postgres_data:/var/lib/postgresql/data/
-    environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=procyclingdb
+    container_name: procycling-scraper-db
+    image: postgres:15
     ports:
       - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    env_file:
+      - .env
+    networks:
+      - procycling-net
+
+networks:
+  procycling-net:
+    driver: bridge
 
 volumes:
   postgres_data:
