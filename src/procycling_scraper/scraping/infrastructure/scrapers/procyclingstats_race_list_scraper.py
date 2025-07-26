@@ -9,8 +9,9 @@ from procycling_scraper.scraping.domain.entities.race import RaceType
 
 
 class ProCyclingStatsRaceListScraper(RaceListScraper):
-    # PCS ID for circuits to scrape
-    CIRCUIT_IDS = ["1"]
+    WORLD_TOUR_CIRCUIT_ID = "1"
+    UCI_PRO_SERIES_CIRCUIT_ID = "26"
+    CIRCUIT_IDS = [WORLD_TOUR_CIRCUIT_ID, UCI_PRO_SERIES_CIRCUIT_ID]
 
     def __init__(self, base_url: str = "https://www.procyclingstats.com"):
         self._base_url = base_url
