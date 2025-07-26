@@ -2,3 +2,5 @@ requests
 beautifulsoup4
 lxml
 typer[all]
+psycopg2-binary
+SQLAlchemy
