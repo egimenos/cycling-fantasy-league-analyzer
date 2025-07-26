@@ -92,25 +92,3 @@ class ProCyclingStatsRaceListScraper(RaceListScraper):
         print(
             f"--- Found {len(unique_races)} total unique races for {year} ---")
         return list(unique_races)
-
-
-if __name__ == "__main__":
-    scraper = ProCyclingStatsRaceListScraper()
-    races_to_scrape = scraper.scrape(year=2024)
-
-    if races_to_scrape:
-        print("\n--- Race List Scraping Test Results ---")
-        one_day_races = len(
-            [r for r, t in races_to_scrape if t == RaceType.ONE_DAY])
-        stage_races = len(
-            [r for r, t in races_to_scrape if t == RaceType.STAGE_RACE])
-        print(
-            f"Found {one_day_races} One-Day races and {stage_races} Stage races.")
-
-        print("\nFirst 5 stage race URLs found:")
-        stage_race_urls = [url for url,
-                           t in races_to_scrape if t == RaceType.STAGE_RACE]
-        for url in stage_race_urls[:5]:
-            print(f"- {url}")
-    else:
-        print("Scraping did not return any race URLs.")
