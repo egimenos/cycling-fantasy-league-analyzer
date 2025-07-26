@@ -1,4 +1,5 @@
 from contextlib import redirect_stdout
+from sqlalchemy import MetaData
 from typing import Optional
 
 import typer
@@ -8,15 +9,10 @@ from procycling_scraper.scraping.domain.entities.race import Race
 from procycling_scraper.scraping.domain.entities.rider import Rider
 from procycling_scraper.scraping.domain.repositories.race_repository import RaceRepository
 from procycling_scraper.scraping.domain.repositories.rider_repository import RiderRepository
+from procycling_scraper.scraping.infrastructure.repositories.postgres_rider_repository import PostgresRiderRepository
 from procycling_scraper.scraping.infrastructure.scrapers.procyclingstats_race_data_scraper import ProCyclingStatsRaceDataScraper
 from procycling_scraper.scraping.infrastructure.scrapers.procyclingstats_race_list_scraper import ProCyclingStatsRaceListScraper
-
-
-class FakeRiderRepository(RiderRepository):
-    def save(self, rider: Rider) -> None: print(
-        f"    [DB-Rider-Fake] 'Saving' rider: {rider.name}")
-
-    def find_by_pcs_id(self, pcs_id: str): return None
+from procycling_scraper.scraping.infrastructure.database.schema import engine, metadata
 
 
 class FakeRaceRepository(RaceRepository):
@@ -61,7 +57,7 @@ def scrape_year(
 def _run_use_case(year: int):
     race_list_scraper = ProCyclingStatsRaceListScraper()
     race_data_scraper = ProCyclingStatsRaceDataScraper()
-    rider_repo = FakeRiderRepository()
+    rider_repo = PostgresRiderRepository(engine=engine)
     race_repo = FakeRaceRepository()
 
     use_case = ScrapeYearUseCase(
@@ -70,14 +66,15 @@ def _run_use_case(year: int):
         race_repository=race_repo,
         rider_repository=rider_repo,
     )
-    # Ejecución
     use_case.execute(year)
 
 
 @app.command()
 def db_init():
-    typer.echo("Database initialization command would run here...")
-    pass
+    """Initializes the database by creating all tables."""
+    typer.echo("Initializing database and creating tables...")
+    metadata.create_all(engine)
+    typer.echo("Database initialized successfully.")
 
 
 if __name__ == "__main__":

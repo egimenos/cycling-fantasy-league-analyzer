@@ -1,6 +1,9 @@
-from procycling_scraper.scraping.application.dto.scraped_race_data import ScrapedRaceData  # Import the DTO
+from typing import Tuple
+
+from procycling_scraper.scraping.application.dto.scraped_race_data import ScrapedRaceData
 from procycling_scraper.scraping.application.ports.race_data_scraper import RaceDataScraper
 from procycling_scraper.scraping.application.ports.race_list_scraper import RaceListScraper
+from procycling_scraper.scraping.domain.entities.race import RaceType
 from procycling_scraper.scraping.domain.repositories.race_repository import RaceRepository
 from procycling_scraper.scraping.domain.repositories.rider_repository import RiderRepository
 
@@ -24,30 +27,35 @@ class ScrapeYearUseCase:
 
     def execute(self, year: int) -> None:
         """
-        Args:
-            year: The year to scrape.
+        Executes the primary use case: scrape all race data for a given year.
         """
         print(f"Executing use case: Scrape and Persist for year {year}...")
 
-        race_urls = self._race_list_scraper.scrape(year)
-        print(f"Found {len(race_urls)} races to scrape.")
+        races_info: list[Tuple[str, RaceType]
+                         ] = self._race_list_scraper.scrape(year)
+        print(f"Found {len(races_info)} races to scrape.")
 
-        for url in race_urls:
+        for race_info in races_info:
             try:
-                print(f"Scraping race from URL: {url}")
+                print(f"Processing race info: {race_info}")
 
                 scraped_data: ScrapedRaceData = self._race_data_scraper.scrape(
-                    url)
+                    race_info)
 
+                if "Scraping Failed" in scraped_data.race.name:
+                    continue
+
+                print(
+                    f"  -> Found {len(scraped_data.riders)} riders with points in this race. Saving to DB...")
                 for rider in scraped_data.riders:
                     self._rider_repository.save(rider)
 
                 self._race_repository.save(scraped_data.race)
 
-                print(
-                    f"Successfully scraped and saved race: {scraped_data.race.name}")
+                print(f"Successfully processed race: {scraped_data.race.name}")
 
             except Exception as e:
-                print(f"ERROR: Failed to process race from {url}. Reason: {e}")
+                print(
+                    f"ERROR: Failed to process race from {race_info[0]}. Reason: {e}")
 
         print(f"Finished use case for year {year}.")
