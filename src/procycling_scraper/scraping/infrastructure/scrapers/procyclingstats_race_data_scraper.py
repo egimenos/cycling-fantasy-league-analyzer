@@ -223,6 +223,6 @@ class ProCyclingStatsRaceDataScraper(RaceDataScraper):
         result_line = ResultLine(
             rider_pcs_id=rider.pcs_id,
             team_name=team_name,
-            pcs_points=pcs_points
+            points=pcs_points
         )
         return rider, result_line

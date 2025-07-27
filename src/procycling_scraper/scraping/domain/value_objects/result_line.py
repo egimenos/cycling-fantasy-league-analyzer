@@ -8,4 +8,4 @@ class ResultLine:
     """
     rider_pcs_id: str
     team_name: str
-    pcs_points: int
+    points: int
