@@ -15,7 +15,6 @@ from procycling_scraper.scraping.domain.value_objects.result_line import ResultL
 class ProCyclingStatsRaceDataScraper(RaceDataScraper):
     def __init__(self, base_url: str = "https://www.procyclingstats.com"):
         self._base_url = base_url
-    # ... (los métodos scrape, _scrape_one_day_race, _scrape_stage_race, _extract_classification_urls, _parse_select_menu_options, _get_page_soup, y _scrape_race_details NO cambian) ...
 
     def scrape(self, race_info: Tuple[str, RaceType]) -> ScrapedRaceData:
         base_race_url_path = re.sub(r"/(gc|result|results)$", "", race_info[0])
@@ -72,13 +71,25 @@ class ProCyclingStatsRaceDataScraper(RaceDataScraper):
         nav_containers = soup.select('div.selectNav')
         if not nav_containers:
             return []
+
         for container in nav_containers:
             if not isinstance(container, Tag):
                 continue
-            if container.find("a", string=re.compile(r"PREV|NEXT")):
+
+            prev_next_links = container.find_all("a")
+            has_prev_next = False
+
+            for link in prev_next_links:
+                link_text = link.get_text(strip=True)
+                if "PREV" in link_text or "NEXT" in link_text or "«" in link_text or "»" in link_text:
+                    has_prev_next = True
+                    break
+
+            if has_prev_next:
                 target_select_menu = container.find("select")
                 if isinstance(target_select_menu, Tag):
                     return self._parse_select_menu_options(target_select_menu)
+
         print("WARN: Could not find the main classification <select> menu with PREV/NEXT links.")
         return []
 
@@ -149,8 +160,7 @@ class ProCyclingStatsRaceDataScraper(RaceDataScraper):
                 raise ValueError("Table head not found")
             header_tags = thead.find_all("th")
             team_headers = ["Team", "Tm"]
-            # --- CAMBIO AQUÍ ---
-            points_header = "Pnt"  # Antes era "UCI"
+            points_header = "Pnt"
             rider_header = "Rider"
             headers = [h.text.strip() for h in header_tags]
             team_header_found = next(
@@ -160,7 +170,6 @@ class ProCyclingStatsRaceDataScraper(RaceDataScraper):
             header_map: Dict[str, int] = {
                 "Rider": headers.index(rider_header),
                 "Team": headers.index(team_header_found),
-                # --- CAMBIO AQUÍ ---
                 "Pnt": headers.index(points_header)
             }
         except (ValueError, AttributeError):
@@ -187,7 +196,6 @@ class ProCyclingStatsRaceDataScraper(RaceDataScraper):
         if len(cells) <= max(header_map.values()):
             return None
         try:
-            # --- CAMBIO AQUÍ ---
             pcs_points_text = cells[header_map["Pnt"]].text.strip()
             pcs_points_str = pcs_points_text.split(
             )[0] if pcs_points_text else "0"
@@ -215,7 +223,6 @@ class ProCyclingStatsRaceDataScraper(RaceDataScraper):
         result_line = ResultLine(
             rider_pcs_id=rider.pcs_id,
             team_name=team_name,
-            # --- CAMBIO AQUÍ ---
             pcs_points=pcs_points
         )
         return rider, result_line
