@@ -4,3 +4,5 @@ lxml
 typer[all]
 psycopg2-binary
 SQLAlchemy
+fastapi
+uvicorn[standard]

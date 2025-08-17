@@ -63,3 +63,5 @@ A Makefile is provided for convenience. Run `make help` to see all available com
 - **make cli**: Gets an interactive shell (bash) inside the application container, useful for debugging.
 - **make db-init**: Initializes the database schema by creating all tables.
 - **make scrape [YEAR]**: Runs the scraper for the specified year (e.g., `make scrape 2023`).
+- **make run-api: Starts the FastAPI server with live reloading.
+

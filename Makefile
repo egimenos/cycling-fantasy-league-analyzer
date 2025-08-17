@@ -45,3 +45,6 @@ scrape:
 
 db-init:
 	docker-compose exec app python -m src.main db-init
+
+run-api:
+	docker-compose exec app uvicorn src.procycling_scraper.analysis.infrastructure.api.main:app --host 0.0.0.0 --port 8000 --reload
