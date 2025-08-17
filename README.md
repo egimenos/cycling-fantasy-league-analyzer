@@ -54,6 +54,13 @@ You can connect to the PostgreSQL database using your favorite client with the c
 
 ## Makefile Commands
 
+### 6. API documentation
+
+Once the API server is running (make run-api), the interactive documentation is automatically available at the following URLs:
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
+
+
 A Makefile is provided for convenience. Run `make help` to see all available commands.
 
 - **make up**: Starts all services in detached mode.
