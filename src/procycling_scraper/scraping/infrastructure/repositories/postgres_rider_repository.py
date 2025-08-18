@@ -1,6 +1,8 @@
 
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.engine import Engine
+from sqlalchemy import select
+from typing import List
 
 from procycling_scraper.scraping.domain.entities.rider import Rider
 from procycling_scraper.scraping.domain.repositories.rider_repository import RiderRepository
@@ -12,7 +14,6 @@ class PostgresRiderRepository(RiderRepository):
         self._engine = engine
 
     def save(self, rider: Rider) -> None:
-        """Saves a rider, ignoring duplicates based on pcs_id."""
         stmt = insert(riders_table).values(
             pcs_id=rider.pcs_id,
             name=rider.name
@@ -24,3 +25,10 @@ class PostgresRiderRepository(RiderRepository):
 
     def find_by_pcs_id(self, pcs_id: str):
         pass
+
+    def find_all(self) -> List[Rider]:
+        stmt = select(riders_table)
+        with self._engine.connect() as conn:
+            results = conn.execute(stmt).fetchall()
+        
+        return [Rider(pcs_id=row.pcs_id, name=row.name) for row in results]

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Optional, List
 
 from procycling_scraper.scraping.domain.entities.rider import Rider
 
@@ -26,4 +26,9 @@ class RiderRepository(ABC):
         Returns:
             An optional Rider, which will be None if no rider is found.
         """
+        pass
+
+    @abstractmethod
+    def find_all(self) -> 'List[Rider]':
+        """Fetches all riders from the database."""
         pass

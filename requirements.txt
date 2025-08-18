@@ -6,3 +6,5 @@ psycopg2-binary
 SQLAlchemy
 fastapi
 uvicorn[standard]
+thefuzz
+python-Levenshtein
