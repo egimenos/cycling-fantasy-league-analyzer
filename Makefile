@@ -1,4 +1,4 @@
-.PHONY: help build up down logs cli scrape db-init db-test
+.PHONY: help build up stop down logs cli scrape db-migrate db-test
 
 ARGS = $(filter-out $@,$(MAKECMDGOALS))
 
@@ -7,23 +7,27 @@ help:
 	@echo "-------------------------------------------"
 	@echo "Usage: make [command] [ARGS...]"
 	@echo ""
-	@echo "Docker Commands:"
-	@echo "  build         Build or rebuild the docker images"
-	@echo "  up            Start all services in detached mode"
-	@echo "  down          Stop and remove all services and volumes"
+	@echo "Docker Environment:"
+	@echo "  up            Builds images if needed and starts all services"
+	@echo "  stop          Stops all running services (keeps data)"
+	@echo "  down          Stops services AND DELETES ALL DATA (volumes)"
+	@echo "  build         Force a rebuild of the docker images"
 	@echo "  logs          Follow the logs of the app container"
 	@echo ""
-	@echo "Application Commands:"
-	@echo "  cli           Get a shell inside the running app container"
-	@echo "  scrape        Run the scraper for a specific year. Usage: make scrape 2024"
-	@echo "  db-init       Initialize the database and create tables"
+	@echo "Application Tasks:"
+	@echo "  cli           Get an interactive shell inside the app container"
+	@echo "  scrape        Run the scraper. Usage: make scrape 2024"
+	@echo "  db-migrate    Apply database migrations. Creates/updates tables"
 	@echo "  db-test       Run a simple database connection test"
 
 build:
 	docker-compose build
 
 up:
-	docker-compose up -d
+	docker-compose up -d --build
+
+stop:
+	docker-compose stop
 
 down:
 	docker-compose down --volumes

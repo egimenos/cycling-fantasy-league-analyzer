@@ -17,7 +17,7 @@ app = typer.Typer(
 
 @app.command()
 def scrape_year(
-    year: int = typer.Argument(..., help="The year to scrape data for."),
+    year: int = typer.Argument(None, help="The year to scrape data for."),
     output_file: Optional[str] = typer.Option(
         None, "--output-file", "-o", help="Redirect output to a file."
     )
@@ -60,8 +60,13 @@ def _run_use_case(year: int):
 
 @app.command()
 def db_init():
-    """Initializes the database by creating all tables."""
-    typer.echo("Initializing database and creating tables...")
+    """
+    (Re)Initializes the database by dropping and creating all tables.
+    """
+    typer.echo("Dropping all existing tables from the database...")
+    metadata.drop_all(engine, checkfirst=True)
+    
+    typer.echo("Creating all tables...")
     metadata.create_all(engine)
     typer.echo("Database initialized successfully.")
 

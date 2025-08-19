@@ -3,6 +3,8 @@ version: '3.8'
 services:
   app:
     container_name: procycling-scraper-app
+    ports:
+      - "8000:8000"
     build: .
     volumes:
       - ./src:/app/src
