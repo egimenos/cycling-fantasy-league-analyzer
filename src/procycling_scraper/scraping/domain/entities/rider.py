@@ -1,7 +1,8 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import Optional
+from uuid import UUID
 
-
-@dataclass(frozen=True)
+@dataclass
 class Rider:
     """
     Represents a unique cyclist.
@@ -13,6 +14,8 @@ class Rider:
         pcs_id (str): The unique identifier for the rider from ProCyclingStats,
         e.g., "tadej-pogacar".
         name (str): The full name of the rider.
+        id (Optional[UUID]): The unique identifier for the rider in the local
     """
     pcs_id: str
     name: str
+    id: Optional[UUID] = field(default=None)

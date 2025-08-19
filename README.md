@@ -1,57 +1,66 @@
 # ProCyclingStats Scraper & Analyzer
 
-This project is a Python application designed to scrape race data from `procyclingstats.com` and provide an API for data analysis. It is built following Domain-Driven Design (DDD) principles and runs entirely on Docker.
+A Python application that scrapes race data from `procyclingstats.com` and provides an API for cycling data analysis to be used in fantasy leagues.
 
-## 🚀 Quickstart: Full Workflow Example
+## Table of Contents
 
-This example shows the end-to-end process: from a clean slate to getting a rider analysis via the API.
+- [Prerequisites](#prerequisites)
+- [Quick Start Guide](#quick-start-guide)
+- [API Documentation](#api-documentation)
+- [Available Commands](#available-commands)
+- [Project Structure](#project-structure)
+- [Common Workflows](#common-workflows)
 
-### Prerequisites
+## Prerequisites
 
 - Docker & Docker Compose
 - `make` (usually pre-installed on Linux/WSL)
 
-### 1. Setup Environment
+## Quick Start Guide
 
-First, create your local configuration file from the provided template.
+This guide takes you from zero to a working cyclist analysis in 5 steps.
+
+### Step 1: Environment Setup
+
+Create your local configuration from the template:
 
 ```bash
 cp .env.example .env
 ```
 
-### 2. Reset and Initialize the Database
+### Step 2: Initialize Database
 
-To start from a completely clean state, this command will stop any running services, **delete all existing data**, and restart the services with a fresh, empty database.
+Start with a clean database and create the necessary tables:
 
 ```bash
+# Reset database (deletes all existing data)
 make db-reset
-```
 
-Now, create the necessary tables in the new database.
-
-```bash
+# Create database schema
 make db-init
 ```
 
-### 3. Populate the Database with Data
+### Step 3: Scrape Data
 
-Run the scraper for a specific year to collect race and rider data. This process can take several minutes.
+Collect race and rider data for a specific year (this may take several minutes):
 
 ```bash
 make scrape year=2023
 ```
 
-### 4. Start the API Server
+### Step 4: Start API Server
 
-In a **separate terminal window**, start the FastAPI server. Leave this terminal running.
+In a **new terminal window**, start the FastAPI server:
 
 ```bash
 make run-api
 ```
 
-### 5. Get a Rider Analysis
+Keep this terminal running. The API will be available at `http://localhost:8000`
 
-In **another terminal window**, send a POST request to the analysis endpoint with the cyclists you want to evaluate.
+### Step 5: Analyze Cyclists
+
+In **another terminal**, send a request to analyze specific cyclists:
 
 ```bash
 curl -X POST "http://localhost:8000/v1/cyclists/process" \
@@ -75,72 +84,123 @@ curl -X POST "http://localhost:8000/v1/cyclists/process" \
 ]'
 ```
 
-The API will return a JSON response with the matched riders from your database.
+The API will return detailed analysis data for the matched riders.
 
 ## API Documentation
 
-Once the API server is running (`make run-api`), the interactive documentation is automatically available at the following URLs:
+Once the API server is running, interactive documentation is available at:
 
 - **Swagger UI:** http://localhost:8000/docs
 - **ReDoc:** http://localhost:8000/redoc
 
-## Makefile Commands
+## Available Commands
 
-A Makefile is provided for convenience. Run `make help` to see all available commands.
+Run `make help` to see all available commands. Here are the most important ones:
 
-### Docker Environment
+### 🐳 Docker Environment
 
-- **make up**: Starts all services (app & db containers) in the background.
-- **make down**: Stops services but **keeps the database data**.
-- **make build**: Rebuilds the docker images if you change the code or dependencies.
-- **make logs**: Follows the logs from the application container.
-- **make cli**: Gets an interactive shell (bash) inside the application container.
+| Command      | Description                         |
+| ------------ | ----------------------------------- |
+| `make up`    | Start all services in background    |
+| `make down`  | Stop services (keeps database data) |
+| `make build` | Rebuild Docker images               |
+| `make logs`  | Follow application logs             |
+| `make cli`   | Interactive shell in app container  |
 
-### Database Management
+### 🗄️ Database Management
 
-- **make db-init**: (Re)Initializes the database schema. It will drop all existing tables before creating them again.
-- **make db-reset**: Resets the entire database. It stops the services, **deletes all data permanently**, and restarts the services.
+| Command         | Description                                        |
+| --------------- | -------------------------------------------------- |
+| `make db-init`  | Initialize database schema (drops existing tables) |
+| `make db-reset` | **⚠️ Reset entire database (deletes all data)**    |
+| `make db-test`  | Test database connection                           |
 
-### Application Tasks
+### 🔄 Database Migrations
 
-- **make scrape year=[YEAR]**: Runs the scraper for the specified year.
-- **make run-api**: Starts the FastAPI server with live reloading on localhost:8000.
-- **make db-test**: Runs a simple test to verify the database connection.
-The API will return a JSON response with the matched riders from your database.
+| Command                          | Description                   |
+| -------------------------------- | ----------------------------- |
+| `make migrate-new "description"` | Create new migration          |
+| `make migrate-up`                | Apply pending migrations      |
+| `make migrate-down -1`           | Rollback last migration       |
+| `make migrate-history`           | Show migration history        |
+| `make migrate-current`           | Show current migration status |
 
-## API Documentation
+### 🚀 Application Tasks
 
-Once the API server is running (`make run-api`), the interactive documentation is automatically available at the following URLs:
+| Command                 | Description                          |
+| ----------------------- | ------------------------------------ |
+| `make scrape year=YYYY` | Scrape data for specific year        |
+| `make run-api`          | Start FastAPI server with hot reload |
 
-- **Swagger UI:** http://localhost:8000/docs
-- **ReDoc:** http://localhost:8000/redoc
+## Project Structure
 
-## Makefile Commands
+```
+├── src/                    # Application source code
+├── migrations/             # Database migrations
+├── docker-compose.yml      # Docker services configuration
+├── Dockerfile             # Application container definition
+├── Makefile               # Development commands
+├── .env.example           # Environment template
+└── README.md              # This file
+```
 
-A Makefile is provided for convenience. Run `make help` to see all available commands.
+## Common Workflows
 
-### Docker Environment
+### 🔄 Daily Development
 
-- **make up**: Starts all services (app & db containers) in the background.
-- **make down**: Stops services but **keeps the database data**.
-- **make build**: Rebuilds the docker images if you change the code or dependencies.
-- **make logs**: Follows the logs from the application container.
-- **make cli**: Gets an interactive shell (bash) inside the application container.
+```bash
+# Start services
+make up
 
-### Database Management
+# Check logs
+make logs
 
-- **make db-init**: (Re)Initializes the database schema. It will drop all existing tables before creating them again.
-- **make db-reset**: Resets the entire database. It stops the services, **deletes all data permanently**, and restarts the services.
+# Access container shell for debugging
+make cli
+```
 
-### Migrations
+### 📊 Adding New Data
 
-- Create migration (autogenerate): `make migrate-new "describe change"`
-- Apply migrations: `make migrate-up`
-- Downgrade one: `make migrate-down -1`
-- Show history/current: `make migrate-history`, `make migrate-current`
+```bash
+# Scrape additional year
+make scrape year=2024
 
-### Application Tasks
+# Or reset and scrape fresh data
+make db-reset
+make db-init
+make scrape year=2023
+```
 
-- **make scrape year=[YEAR]**: Runs the scraper for the specified year.
-- **make run-api**: Starts the FastAPI server with live reloading on localhost:8000.
-- **make db-test**: Runs a simple test to verify the database connection.
+### 🐛 Troubleshooting
+
+```bash
+# Rebuild if dependencies changed
+make build
+
+# Reset everything if issues persist
+make down
+make db-reset
+make db-init
+```
+
+### 💾 Database Updates
+
+```bash
+# Create migration after model changes
+make migrate-new "add new column to riders table"
+
+# Apply migrations
+make migrate-up
+
+# Check migration status
+make migrate-current
+```
+
+---
+
+**⚠️ Important Notes:**
+
+- `make db-reset` **permanently deletes all data**
+- Keep the API server running in a separate terminal
+- Scraping large datasets can take significant time
+- Check API documentation at `/docs` for detailed endpoint information
