@@ -71,5 +71,6 @@ pcs_points_results_table = Table(
     Column('points', Integer, nullable=False),
     Column('created_at', DateTime, nullable=False, server_default=func.now()),
     Column('updated_at', DateTime, nullable=False,
-           server_default=func.now(), onupdate=func.now())
+           server_default=func.now(), onupdate=func.now()),
+    UniqueConstraint('classification_id', 'rider_id', name='uq_result_per_rider_per_classification')
 )

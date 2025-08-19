@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from typing import Optional
 from uuid import UUID
 
-@dataclass
+@dataclass(frozen=True)
 class Rider:
     """
     Represents a unique cyclist.

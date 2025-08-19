@@ -1,6 +1,6 @@
-from typing import List, Any, Dict
+from typing import Any, Dict
 from fastapi import FastAPI
-from procycling_scraper.analysis.application.dto.cyclist_dto import CyclistDTO
+from procycling_scraper.analysis.application.dto.cyclist_dto import AnalysisRequestDTO # Importamos el DTO correcto
 from procycling_scraper.analysis.application.process_cyclists_use_case import ProcessCyclistsUseCase
 
 from procycling_scraper.scraping.infrastructure.database.schema import engine
@@ -13,14 +13,10 @@ app = FastAPI(
 )
 
 @app.post("/v1/cyclists/process", status_code=200)
-def process_cyclists(cyclists_data: List[CyclistDTO]) -> Dict[str, Any]:
-    """
-    Receives a list of cyclists with prices, matches them against the database,
-    calculates their value score based on past results, and returns the analysis.
-    """
+def process_cyclists(request_data: AnalysisRequestDTO) -> Dict[str, Any]: # Usamos el DTO correcto
     rider_repo = PostgresRiderRepository(engine=engine)
     
     use_case = ProcessCyclistsUseCase(rider_repository=rider_repo)
     
-    result = use_case.execute(cyclists=cyclists_data)
+    result = use_case.execute(request_data=request_data) # Pasamos el DTO completo
     return result

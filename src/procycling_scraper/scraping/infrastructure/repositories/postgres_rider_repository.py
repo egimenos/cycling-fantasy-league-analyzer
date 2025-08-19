@@ -41,7 +41,10 @@ class PostgresRiderRepository(RiderRepository):
         stmt = select(
             pcs_points_results_table.c.rider_id,
             pcs_points_results_table.c.points,
-            races_table.c.year
+            races_table.c.year,
+            races_table.c.type.label("race_type")
+        ).select_from(
+            pcs_points_results_table
         ).join(
             classifications_table,
             pcs_points_results_table.c.classification_id == classifications_table.c.id
@@ -55,7 +58,12 @@ class PostgresRiderRepository(RiderRepository):
 
         grouped_results: Dict[UUID, List[RiderResultDTO]] = {rider_id: [] for rider_id in rider_ids}
         for row in db_results:
-            result = RiderResultDTO(rider_id=row.rider_id, points=row.points, year=row.year)
+            result = RiderResultDTO(
+                rider_id=row.rider_id,
+                points=row.points,
+                year=row.year,
+                race_type=row.race_type 
+            )
             grouped_results[row.rider_id].append(result)
             
         return grouped_results
