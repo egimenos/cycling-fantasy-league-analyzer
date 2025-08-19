@@ -4,6 +4,7 @@ lxml
 typer[all]
 psycopg2-binary
 SQLAlchemy
+alembic
 fastapi
 uvicorn[standard]
 thefuzz
