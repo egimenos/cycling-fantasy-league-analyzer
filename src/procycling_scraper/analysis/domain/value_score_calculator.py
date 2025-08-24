@@ -16,13 +16,13 @@ class ValueScoreCalculator:
             
             year_weight = 1.0
             if year_diff == 1:
-                year_weight = 0.75
+                year_weight = 0.5
             elif year_diff == 2:
-                year_weight = 0.50
-            elif year_diff > 2:
                 year_weight = 0.25
+            elif year_diff > 2:
+                year_weight = 0.1
             
-            type_weight = 1.0 if result.race_type == target_race_type else 0.2
+            type_weight = 1.0 if result.race_type == target_race_type else 0.5
             
             final_weight = year_weight * type_weight
             

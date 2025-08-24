@@ -11,7 +11,8 @@ from procycling_scraper.scraping.domain.entities.race import RaceType
 class ProCyclingStatsRaceListScraper(RaceListScraper):
     WORLD_TOUR_CIRCUIT_ID = "1"
     UCI_PRO_SERIES_CIRCUIT_ID = "26"
-    CIRCUIT_IDS = [WORLD_TOUR_CIRCUIT_ID, UCI_PRO_SERIES_CIRCUIT_ID]
+    EUROPE_TOUR_ID = "13"
+    CIRCUIT_IDS = [WORLD_TOUR_CIRCUIT_ID, UCI_PRO_SERIES_CIRCUIT_ID, EUROPE_TOUR_ID]
 
     def __init__(self, base_url: str = "https://www.procyclingstats.com"):
         self._base_url = base_url
