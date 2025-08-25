@@ -30,42 +30,44 @@ Create your local configuration from the template:
 cp .env.example .env
 ```
 
-### Step 2: Initialize Database
-
-Start with a clean database and create the necessary tables:
+### Step 2: Start services
 
 ```bash
-# Reset database (deletes all existing data)
-make db-reset
+make up
+```
 
-# Create database schema
+### Step 3: Initialize Database
+
+Initialize the schema (requires services running):
+
+```bash
 make db-init
 ```
 
-### Step 3: Scrape Data
+### Step 4: Scrape Data
 
 Collect race and rider data for a specific year (this may take several minutes):
 
 ```bash
-make scrape year=2023
+make scrape 2023
 ```
 
-### Step 4: Start API Server
+### Step 5: Start API Server
 
-In a **new terminal window**, start the FastAPI server:
+In a new terminal window, start the FastAPI server:
 
 ```bash
 make run-api
 ```
 
-Keep this terminal running. The API will be available at `http://localhost:8000`
+Keep this terminal running. The API will be available at `http://localhost:8001`.
 
-### Step 5: Analyze Cyclists
+### Step 6: Analyze Cyclists
 
-In **another terminal**, send a request to analyze specific cyclists:
+In another terminal, send a request to analyze specific cyclists:
 
 ```bash
-curl -X POST "http://localhost:8000/v1/cyclists/process" \
+curl -X POST "http://localhost:8001/v1/cyclists/process" \
 -H "Content-Type: application/json" \
 -d '[
   {
@@ -92,49 +94,49 @@ The API will return detailed analysis data for the matched riders.
 
 Once the API server is running, interactive documentation is available at:
 
-- **Swagger UI:** http://localhost:8000/docs
-- **ReDoc:** http://localhost:8000/redoc
+- Swagger UI: http://localhost:8001/docs
+- ReDoc: http://localhost:8001/redoc
 
 ## Available Commands
 
 Run `make help` to see all available commands. Here are the most important ones:
 
-### 🐳 Docker Environment
+### Docker Environment
 
-| Command      | Description                         |
-| ------------ | ----------------------------------- |
-| `make up`    | Start all services in background    |
-| `make down`  | Stop services (keeps database data) |
-| `make build` | Rebuild Docker images               |
-| `make logs`  | Follow application logs             |
-| `make cli`   | Interactive shell in app container  |
+| Command      | Description                                        |
+| ------------ | -------------------------------------------------- |
+| `make up`    | Start all services in background (build if needed) |
+| `make stop`  | Stop services (keeps data)                         |
+| `make down`  | Stop services and delete all data (volumes)        |
+| `make build` | Force a rebuild of the docker images               |
+| `make logs`  | Follow the logs of the app container               |
+| `make cli`   | Get an interactive shell inside the app container  |
 
-### 🗄️ Database Management
+### Database Management
 
-| Command         | Description                                        |
-| --------------- | -------------------------------------------------- |
-| `make db-init`  | Initialize database schema (drops existing tables) |
-| `make db-reset` | **⚠️ Reset entire database (deletes all data)**    |
-| `make db-test`  | Test database connection                           |
+| Command           | Description                                    |
+| ----------------- | ---------------------------------------------- |
+| `make db-init`    | Initialize database schema                     |
+| `make db-migrate` | Apply all migrations (alias of `upgrade head`) |
 
-### 🔄 Database Migrations
+### Database Migrations
 
-| Command                          | Description                   |
-| -------------------------------- | ----------------------------- |
-| `make migrate-new "description"` | Create new migration          |
-| `make migrate-up`                | Apply pending migrations      |
-| `make migrate-down -1`           | Rollback last migration       |
-| `make migrate-history`           | Show migration history        |
-| `make migrate-current`           | Show current migration status |
+| Command                      | Description                             |
+| ---------------------------- | --------------------------------------- |
+| `make migrate-new "message"` | Create a new migration from models      |
+| `make migrate-up`            | Upgrade DB to latest (or target)        |
+| `make migrate-down -1`       | Downgrade last migration (or to target) |
+| `make migrate-history`       | Show migration history                  |
+| `make migrate-current`       | Show current DB revision                |
 
-### 🚀 Application Tasks
+### Application Tasks
 
-| Command                 | Description                          |
-| ----------------------- | ------------------------------------ |
-| `make scrape year=YYYY` | Scrape data for specific year        |
-| `make run-api`          | Start FastAPI server with hot reload |
+| Command            | Description                                 |
+| ------------------ | ------------------------------------------- |
+| `make scrape YYYY` | Scrape data for specific year               |
+| `make run-api`     | Start FastAPI server with hot reload (8001) |
 
-### 🧪 Testing
+### Testing
 
 | Command         | Description                       |
 | --------------- | --------------------------------- |
@@ -147,18 +149,22 @@ Run `make help` to see all available commands. Here are the most important ones:
 ## Project Structure
 
 ```
-├── src/                    # Application source code
-├── migrations/             # Database migrations
-├── docker-compose.yml      # Docker services configuration
-├── Dockerfile             # Application container definition
-├── Makefile               # Development commands
-├── .env.example           # Environment template
-└── README.md              # This file
+├── src/                             # Application source code
+├── alembic/                         # Alembic migrations (versions/)
+├── grafana/
+│   └── provisioning/                # Grafana provisioning (Loki datasource)
+├── docker-compose.yml               # Docker services configuration
+├── Dockerfile                       # Application container definition
+├── Makefile                         # Development commands
+├── pyproject.toml                   # Project configuration
+├── requirements.txt                 # Python dependencies (optional)
+├── tests/                           # Unit tests
+└── README.md                        # This file
 ```
 
 ## Common Workflows
 
-### 🔄 Daily Development
+### Daily Development
 
 ```bash
 # Start services
@@ -171,19 +177,20 @@ make logs
 make cli
 ```
 
-### 📊 Adding New Data
+### Adding New Data
 
 ```bash
 # Scrape additional year
-make scrape year=2024
+make scrape 2024
 
 # Or reset and scrape fresh data
-make db-reset
+make down        # deletes DB volume/data
+make up
 make db-init
-make scrape year=2023
+make scrape 2023
 ```
 
-### 🐛 Troubleshooting
+### Troubleshooting
 
 ```bash
 # Rebuild if dependencies changed
@@ -191,11 +198,11 @@ make build
 
 # Reset everything if issues persist
 make down
-make db-reset
+make up
 make db-init
 ```
 
-### 💾 Database Updates
+### Database Updates
 
 ```bash
 # Create migration after model changes
@@ -277,16 +284,16 @@ To auto-provision the Loki datasource in Grafana:
 
 ## Testing
 
-- Run unit tests: `make pytest`
-- Run with coverage: `make pytest-cov`
+- Run unit tests: `make test`
+- Run with coverage: `make test-cov`
 
 Pytest runs inside the Docker app container. Tests live under the `tests/` folder.
 
 ---
 
-**⚠️ Important Notes:**
+⚠️ Important Notes:
 
-- `make db-reset` **permanently deletes all data**
+- `make down` deletes all data volumes
 - Keep the API server running in a separate terminal
 - Scraping large datasets can take significant time
 - Check API documentation at `/docs` for detailed endpoint information
