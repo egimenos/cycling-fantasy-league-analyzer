@@ -85,12 +85,12 @@ class PostgresRaceRepository(RaceRepository):
         pass
 
     def _save_race_and_get_id(self, conn: Connection, race: Race) -> UUID:
-        stmt = insert(races_table).values(
+        ins = insert(races_table).values(
             pcs_id=race.pcs_id, name=race.name, year=race.year, type=race.race_type
         )
-        stmt = stmt.on_conflict_do_update(
+        stmt = ins.on_conflict_do_update(
             index_elements=["pcs_id"],
-            set_={"name": stmt.excluded.name},
+            set_={"name": ins.excluded.name},
         ).returning(races_table.c.id)
         result = conn.execute(stmt).scalar_one()
         return result
@@ -110,12 +110,12 @@ class PostgresRaceRepository(RaceRepository):
     def _save_classification_and_get_id(
         self, conn: Connection, classification: Classification, race_db_id: UUID
     ) -> UUID:
-        stmt = insert(classifications_table).values(
+        ins = insert(classifications_table).values(
             race_id=race_db_id,
             type=classification.classification_type,
             stage_number=classification.stage_number,
         )
-        stmt = stmt.on_conflict_do_update(
+        stmt = ins.on_conflict_do_update(
             index_elements=["race_id", "type", "stage_number"],
             set_={"type": classification.classification_type},
         ).returning(classifications_table.c.id)
@@ -145,8 +145,8 @@ class PostgresRaceRepository(RaceRepository):
                 )
 
         if results_to_insert:
-            stmt = insert(pcs_points_results_table).values(results_to_insert)
-            stmt = stmt.on_conflict_do_nothing(
+            ins = insert(pcs_points_results_table).values(results_to_insert)
+            stmt = ins.on_conflict_do_nothing(
                 index_elements=["classification_id", "rider_id"]
             )
             conn.execute(stmt)
