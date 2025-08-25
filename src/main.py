@@ -9,10 +9,13 @@ from procycling_scraper.scraping.infrastructure.repositories.postgres_race_repos
 from procycling_scraper.scraping.infrastructure.repositories.postgres_rider_repository import PostgresRiderRepository
 from procycling_scraper.scraping.infrastructure.scrapers.procyclingstats_race_data_scraper import ProCyclingStatsRaceDataScraper
 from procycling_scraper.scraping.infrastructure.scrapers.procyclingstats_race_list_scraper import ProCyclingStatsRaceListScraper
+from procycling_scraper.shared.logging_config import setup_logging
 
 app = typer.Typer(
     help="ProCyclingStats Scraper CLI - A tool to scrape cycling data."
 )
+
+setup_logging()
 
 
 @app.command()
@@ -65,7 +68,7 @@ def db_init():
     """
     typer.echo("Dropping all existing tables from the database...")
     metadata.drop_all(engine, checkfirst=True)
-    
+
     typer.echo("Creating all tables...")
     metadata.create_all(engine)
     typer.echo("Database initialized successfully.")

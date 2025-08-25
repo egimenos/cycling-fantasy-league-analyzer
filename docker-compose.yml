@@ -15,6 +15,10 @@ services:
     networks:
       - procycling-net
     command: tail -f /dev/null
+    logging:
+      driver: loki
+      options:
+        loki-url: "http://loki:3100/loki/api/v1/push"
 
   db:
     container_name: procycling-scraper-db
@@ -25,6 +29,21 @@ services:
       - postgres_data:/var/lib/postgresql/data
     env_file:
       - .env
+    networks:
+      - procycling-net
+  
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: loki
+    ports:
+      - "3100:3100"
+    networks:
+      - procycling-net
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3001:3000"
     networks:
       - procycling-net
 
