@@ -3,42 +3,47 @@ from typing import Dict, List, Set, Tuple
 
 import requests
 from bs4 import BeautifulSoup, Tag
+import logging
 
 from procycling_scraper.scraping.application.ports.race_list_scraper import RaceListScraper
 from procycling_scraper.scraping.domain.entities.race import RaceType
+
+logger = logging.getLogger(__name__)
 
 
 class ProCyclingStatsRaceListScraper(RaceListScraper):
     WORLD_TOUR_CIRCUIT_ID = "1"
     UCI_PRO_SERIES_CIRCUIT_ID = "26"
     EUROPE_TOUR_ID = "13"
-    CIRCUIT_IDS = [WORLD_TOUR_CIRCUIT_ID, UCI_PRO_SERIES_CIRCUIT_ID, EUROPE_TOUR_ID]
+    CIRCUIT_IDS = [WORLD_TOUR_CIRCUIT_ID,
+                   UCI_PRO_SERIES_CIRCUIT_ID, EUROPE_TOUR_ID]
 
     def __init__(self, base_url: str = "https://www.procyclingstats.com"):
         self._base_url = base_url
 
     def scrape(self, year: int) -> List[Tuple[str, RaceType]]:
-        print(f"--- Scraping Race List for {year} ---")
+        logger.info("scrape_race_list_start", extra={"year": year})
         unique_races: Set[Tuple[str, RaceType]] = set()
 
         for circuit_id in self.CIRCUIT_IDS:
             target_url = f"{self._base_url}/races.php?year={year}&circuit={circuit_id}&filter=Filter"
-            print(f"Fetching races from circuit URL: {target_url}")
+            logger.info("fetch_circuit_races", extra={
+                        "url": target_url, "circuit_id": circuit_id})
 
             try:
                 response = requests.get(target_url, timeout=10)
                 response.raise_for_status()
             except requests.exceptions.RequestException as e:
-                print(
-                    f"WARN: Could not fetch URL {target_url}: {e}. Skipping circuit.")
+                logger.warning("fetch_circuit_failed", extra={
+                               "url": target_url, "error": str(e), "circuit_id": circuit_id})
                 continue
 
             soup = BeautifulSoup(response.text, 'lxml')
 
             table = soup.select_one('table[class*="basic"]')
             if not isinstance(table, Tag):
-                print(
-                    f"WARN: No races table found for circuit {circuit_id}. Skipping.")
+                logger.warning("no_races_table", extra={
+                               "circuit_id": circuit_id})
                 continue
 
             try:
@@ -54,8 +59,8 @@ class ProCyclingStatsRaceListScraper(RaceListScraper):
                     "class": headers.index("Class")
                 }
             except (ValueError, AttributeError):
-                print(
-                    f"WARN: Could not find required headers in table for circuit {circuit_id}. Skipping.")
+                logger.warning("table_headers_missing", extra={
+                               "circuit_id": circuit_id})
                 continue
 
             tbody = table.find("tbody")
@@ -90,6 +95,6 @@ class ProCyclingStatsRaceListScraper(RaceListScraper):
                     r"/(gc|result|results)$", "", href_value)
                 unique_races.add((base_race_url, race_type))
 
-        print(
-            f"--- Found {len(unique_races)} total unique races for {year} ---")
+        logger.info("scrape_race_list_complete", extra={
+                    "year": year, "unique_races": len(unique_races)})
         return list(unique_races)
