@@ -1,18 +1,1 @@
-requests
-beautifulsoup4
-lxml
-typer[all]
-psycopg2-binary
-SQLAlchemy
-alembic
-fastapi
-uvicorn[standard]
-thefuzz
-python-Levenshtein
-python-json-logger
-pytest
-pytest-cov
-mypy
-types-requests
-types-beautifulsoup4
-types-urllib3
+-r requirements/dev.txt

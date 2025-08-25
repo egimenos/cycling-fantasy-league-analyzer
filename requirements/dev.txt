@@ -1,0 +1,18 @@
+# Development tools (linters, type checkers, testing)
+-r base.txt
+
+pytest
+pytest-cov
+mypy
+
+# Type stubs
+types-requests
+types-beautifulsoup4
+types-urllib3
+
+# Linters/formatters (kept out of base image)
+black
+flake8
+isort
+bandit
+pip-audit

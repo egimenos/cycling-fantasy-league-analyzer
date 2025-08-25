@@ -1,0 +1,13 @@
+# Base runtime dependencies for the application
+requests
+beautifulsoup4
+lxml
+typer[all]
+psycopg2-binary
+SQLAlchemy
+alembic
+fastapi
+uvicorn[standard]
+thefuzz
+python-Levenshtein
+python-json-logger
