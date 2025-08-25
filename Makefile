@@ -23,6 +23,10 @@ help:
 	@echo "  migrate-down  Downgrade DB one or to target. Usage: make migrate-down [-1|<rev>]"
 	@echo "  migrate-history Show migration history"
 	@echo "  migrate-current Show current DB revision"
+	@echo ""
+	@echo "Testing:"
+	@echo "  pytest         Run tests with pytest"
+	@echo "  pytest-cov     Run tests with coverage report"
 
 build:
 	docker-compose build
@@ -89,6 +93,17 @@ migrate-current:
 # Apply all migrations (alias)
 db-migrate:
 	docker-compose exec app alembic upgrade head
+
+# Testing
+TEST_PATH ?= tests
+
+.PHONY: test test-cov
+
+test:
+	docker-compose run --rm app pytest -q $(TEST_PATH)
+
+test-cov:
+	docker-compose run --rm app pytest --cov=src --cov-report=term-missing --cov-report=xml $(TEST_PATH)
 
 # Swallow extra args as no-op targets to avoid
 # 'No rule to make target' when passing arguments like messages or years

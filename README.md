@@ -11,6 +11,7 @@ A Python application that scrapes race data from `procyclingstats.com` and provi
 - [Project Structure](#project-structure)
 - [Common Workflows](#common-workflows)
 - [Observability](#observability-loki--grafana)
+- [Testing](#testing)
 
 ## Prerequisites
 
@@ -132,6 +133,16 @@ Run `make help` to see all available commands. Here are the most important ones:
 | ----------------------- | ------------------------------------ |
 | `make scrape year=YYYY` | Scrape data for specific year        |
 | `make run-api`          | Start FastAPI server with hot reload |
+
+### 🧪 Testing
+
+| Command         | Description                       |
+| --------------- | --------------------------------- |
+| `make test`     | Run unit tests with pytest        |
+| `make test-cov` | Run tests with coverage reporting |
+
+- Tests run inside the Docker app container.
+- Coverage report in terminal; XML report is generated for CI tools.
 
 ## Project Structure
 
@@ -263,6 +274,13 @@ To auto-provision the Loki datasource in Grafana:
   - In Grafana, check the Loki data source points to `http://loki:3100`.
 - Port conflict when running API:
   - `run-api` maps `8001:8000` to avoid conflicts with the long-running app service.
+
+## Testing
+
+- Run unit tests: `make pytest`
+- Run with coverage: `make pytest-cov`
+
+Pytest runs inside the Docker app container. Tests live under the `tests/` folder.
 
 ---
 
