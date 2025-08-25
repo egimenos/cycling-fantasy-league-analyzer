@@ -49,13 +49,13 @@ scrape:
 		exit 1; \
 	fi
 	@echo "--- Running scraper for year $(YEAR) ---"
-	docker-compose exec app python -m src.main scrape-year $(YEAR)
+	docker-compose run --rm app python -m src.main scrape-year $(YEAR)
 
 db-init:
 	docker-compose exec app python -m src.main db-init
 
 run-api:
-	docker-compose exec app uvicorn src.procycling_scraper.analysis.infrastructure.api.main:app --host 0.0.0.0 --port 8000 --reload
+	docker-compose run --rm -p 8001:8000 app uvicorn src.procycling_scraper.analysis.infrastructure.api.main:app --host 0.0.0.0 --port 8000 --reload
 
 # --- Migration helpers (agnostic names) ---
 migrate-new:

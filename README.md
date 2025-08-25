@@ -10,6 +10,7 @@ A Python application that scrapes race data from `procyclingstats.com` and provi
 - [Available Commands](#available-commands)
 - [Project Structure](#project-structure)
 - [Common Workflows](#common-workflows)
+- [Observability](#observability-loki--grafana)
 
 ## Prerequisites
 
@@ -195,6 +196,73 @@ make migrate-up
 # Check migration status
 make migrate-current
 ```
+
+## Observability (Loki + Grafana)
+
+This project ships container logs to Grafana Loki and lets you explore them in Grafana.
+
+### Prerequisites
+
+- Docker Loki logging driver installed on the host:
+  - Install: `docker plugin install grafana/loki-docker-driver:latest --alias loki --grant-all-permissions`
+  - Verify: `docker plugin ls` (should show `loki:latest ENABLED=true`)
+
+### Stack startup
+
+- Start services (Loki, Grafana, DB, App):
+  - `docker compose up -d loki grafana db app`
+- Check Loki is ready: `curl http://127.0.0.1:3100/ready` → `ready`
+- Grafana UI: `http://localhost:3001`
+
+### Docker logging driver
+
+- The service `app` is configured to use the Loki logging driver in `docker-compose.yml`:
+  - `logging.driver: loki`
+  - `logging.options.loki-url: http://127.0.0.1:3100/loki/api/v1/push` (Linux host)
+- Important: The driver only ships stdout/stderr of the container's main process (PID 1).
+  - Commands run with `docker-compose exec` are NOT shipped to Loki.
+
+### Emit logs
+
+- Scraper (goes to Loki): `make scrape 2024`
+- API (goes to Loki): `make run-api`
+  - By default, the Makefile publishes API on `http://localhost:8001` (8001→8000).
+
+### Grafana provisioning (optional, auto-setup)
+
+To auto-provision the Loki datasource in Grafana:
+
+- The repository includes `grafana/provisioning/datasources/loki.yml` which sets a default Loki datasource at `http://loki:3100`.
+- `docker-compose.yml` mounts this folder into Grafana:
+  - `./grafana/provisioning:/etc/grafana/provisioning`
+- After `docker compose up -d grafana loki`, open Grafana and the datasource should already exist.
+
+### Grafana data source
+
+- In Grafana → Connections → Data sources → Add data source → Loki
+  - URL: `http://loki:3100`
+  - Save & Test should succeed
+
+### Explore logs (examples)
+
+- In Grafana Explore, run queries like:
+  - `{compose_service="app"}`
+  - `{container_name=~"procycling-scraper-app-run-.*"}`
+- Since application logs are JSON (see `src/procycling_scraper/shared/logging_config.py`), you can parse them:
+  - `{compose_service="app"} | json`
+  - `{compose_service="app"} | json | line_format "{{.message}}"`
+  - `{compose_service="app"} | json | level="INFO"`
+
+### Troubleshooting
+
+- No logs in Grafana:
+  - Ensure you used `make scrape` or `make run-api` (not `docker-compose exec`).
+  - Confirm Loki plugin installed/enabled: `docker plugin ls`.
+  - Verify Loki URL in compose uses host IP (Linux: `127.0.0.1`).
+  - Loki ready: `curl http://127.0.0.1:3100/ready` → `ready`.
+  - In Grafana, check the Loki data source points to `http://loki:3100`.
+- Port conflict when running API:
+  - `run-api` maps `8001:8000` to avoid conflicts with the long-running app service.
 
 ---
 
