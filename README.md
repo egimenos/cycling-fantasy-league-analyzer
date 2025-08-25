@@ -1,5 +1,11 @@
 # ProCyclingStats Scraper & Analyzer
 
+[![Tests](https://github.com/egimenos/cycling-fantasy-league-analyzer/actions/workflows/tests.yml/badge.svg)](https://github.com/egimenos/cycling-fantasy-league-analyzer/actions/workflows/tests.yml)
+[![Lint](https://github.com/egimenos/cycling-fantasy-league-analyzer/actions/workflows/lint.yml/badge.svg)](https://github.com/egimenos/cycling-fantasy-league-analyzer/actions/workflows/lint.yml)
+[![Type Check](https://github.com/egimenos/cycling-fantasy-league-analyzer/actions/workflows/type-check.yml/badge.svg)](https://github.com/egimenos/cycling-fantasy-league-analyzer/actions/workflows/type-check.yml)
+[![Security](https://github.com/egimenos/cycling-fantasy-league-analyzer/actions/workflows/security.yml/badge.svg)](https://github.com/egimenos/cycling-fantasy-league-analyzer/actions/workflows/security.yml)
+[![Docker Build](https://github.com/egimenos/cycling-fantasy-league-analyzer/actions/workflows/docker-build.yml/badge.svg)](https://github.com/egimenos/cycling-fantasy-league-analyzer/actions/workflows/docker-build.yml)
+
 A Python application that scrapes race data from `procyclingstats.com` and provides an API for cycling data analysis to be used in fantasy leagues.
 
 ## Table of Contents
