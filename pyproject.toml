@@ -5,3 +5,11 @@ version = "0.1.0"
 [tool.setuptools]
 package-dir = {"" = "src"}
 packages = ["procycling_scraper"]
+
+[tool.mypy]
+python_version = "3.8"
+files = ["src"]
+ignore_missing_imports = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+show_error_codes = true

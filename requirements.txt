@@ -12,3 +12,7 @@ python-Levenshtein
 python-json-logger
 pytest
 pytest-cov
+mypy
+types-requests
+types-beautifulsoup4
+types-urllib3
