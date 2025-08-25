@@ -39,4 +39,4 @@ jobs:
         run: isort --profile black --check-only .
 
       - name: Flake8 (lint)
-        run: flake8 src tests
+        run: flake8 --max-line-length=88 --extend-ignore=E203,W503,E501 src tests
