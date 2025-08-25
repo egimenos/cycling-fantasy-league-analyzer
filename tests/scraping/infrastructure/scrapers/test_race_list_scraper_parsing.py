@@ -1,8 +1,10 @@
-import pathlib
-from procycling_scraper.scraping.infrastructure.scrapers.procyclingstats_race_list_scraper import ProCyclingStatsRaceListScraper
 from procycling_scraper.scraping.domain.entities.race import RaceType
+from procycling_scraper.scraping.infrastructure.scrapers.procyclingstats_race_list_scraper import (
+    ProCyclingStatsRaceListScraper,
+)
 
-# Note: We test the parsing logic by loading a small, local HTML sample and monkeypatching requests.get
+# Note: We test the parsing logic by loading a small, local HTML sample and
+# monkeypatching requests.get
 
 SAMPLE_HTML = """
 <html>

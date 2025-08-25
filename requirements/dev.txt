@@ -4,6 +4,7 @@
 pytest
 pytest-cov
 mypy
+pre-commit
 
 # Type stubs
 types-requests

@@ -10,5 +10,6 @@ class ScrapedRaceData:
     """
     A Data Transfer Object to hold the data scraped from a single race page.
     """
+
     race: Race
     riders: List[Rider]

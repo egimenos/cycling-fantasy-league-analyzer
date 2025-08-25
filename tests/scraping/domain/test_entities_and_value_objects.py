@@ -1,12 +1,18 @@
-from procycling_scraper.scraping.domain.entities.classification import Classification, ClassificationType
+from procycling_scraper.scraping.domain.entities.classification import (
+    Classification,
+    ClassificationType,
+)
 from procycling_scraper.scraping.domain.entities.race import Race, RaceType
-from procycling_scraper.scraping.domain.entities.rider import Rider
 from procycling_scraper.scraping.domain.value_objects.result_line import ResultLine
 
 
 def test_race_aggregate_add_classification_and_results():
-    race = Race(pcs_id="tour-de-test", name="Tour de Test 2024",
-                year=2024, race_type=RaceType.STAGE_RACE)
+    race = Race(
+        pcs_id="tour-de-test",
+        name="Tour de Test 2024",
+        year=2024,
+        race_type=RaceType.STAGE_RACE,
+    )
 
     classification = Classification(
         classification_type=ClassificationType.GENERAL,

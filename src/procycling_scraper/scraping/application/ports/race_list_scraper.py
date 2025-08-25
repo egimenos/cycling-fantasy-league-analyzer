@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List, Tuple
+
 from procycling_scraper.scraping.domain.entities.race import RaceType
 
 
@@ -7,6 +8,7 @@ class RaceListScraper(ABC):
     """
     Interface for a service that scrapes the list of races for a season.
     """
+
     @abstractmethod
     def scrape(self, year: int) -> List[Tuple[str, RaceType]]:
         """

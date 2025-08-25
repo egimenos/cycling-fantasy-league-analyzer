@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from typing import Optional
 from uuid import UUID
 
+
 @dataclass(frozen=True)
 class Rider:
     """
@@ -16,6 +17,7 @@ class Rider:
         name (str): The full name of the rider.
         id (Optional[UUID]): The unique identifier for the rider in the local
     """
+
     pcs_id: str
     name: str
     id: Optional[UUID] = field(default=None)

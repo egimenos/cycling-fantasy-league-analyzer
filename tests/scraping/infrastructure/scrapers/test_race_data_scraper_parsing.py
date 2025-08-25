@@ -1,6 +1,10 @@
-from procycling_scraper.scraping.infrastructure.scrapers.procyclingstats_race_data_scraper import ProCyclingStatsRaceDataScraper
-from procycling_scraper.scraping.domain.entities.classification import ClassificationType
+from procycling_scraper.scraping.domain.entities.classification import (
+    ClassificationType,
+)
 from procycling_scraper.scraping.domain.entities.race import RaceType
+from procycling_scraper.scraping.infrastructure.scrapers.procyclingstats_race_data_scraper import (
+    ProCyclingStatsRaceDataScraper,
+)
 
 # We unit-test parsing by monkeypatching network and returning minimal HTML snippets per page
 
@@ -75,6 +79,7 @@ class DummyResp:
 def test_one_day_parsing(monkeypatch):
     def fake_get(url, timeout=10):
         return DummyResp(ONE_DAY_HTML)
+
     monkeypatch.setattr("requests.get", fake_get)
 
     scraper = ProCyclingStatsRaceDataScraper(base_url="https://example.com")
@@ -82,7 +87,9 @@ def test_one_day_parsing(monkeypatch):
 
     assert data.race.name.startswith("2024 Some Classic")
     assert len(data.race.classifications) == 1
-    assert data.race.classifications[0].classification_type == ClassificationType.GENERAL
+    assert (
+        data.race.classifications[0].classification_type == ClassificationType.GENERAL
+    )
     assert sum(r.points for r in data.race.classifications[0].results) == 80
 
 

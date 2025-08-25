@@ -1,4 +1,6 @@
-from procycling_scraper.analysis.domain.rider_matching_service import RiderMatchingService
+from procycling_scraper.analysis.domain.rider_matching_service import (
+    RiderMatchingService,
+)
 from procycling_scraper.scraping.domain.entities.rider import Rider
 
 

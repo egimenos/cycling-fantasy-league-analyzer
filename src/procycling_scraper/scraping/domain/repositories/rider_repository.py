@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import Optional, List, Dict
+from typing import Dict, List, Optional
 from uuid import UUID
 
-from procycling_scraper.scraping.domain.entities.rider import Rider
 from procycling_scraper.analysis.application.dto.analysis_dtos import RiderResultDTO
+from procycling_scraper.scraping.domain.entities.rider import Rider
 
 
 class RiderRepository(ABC):
@@ -31,12 +31,14 @@ class RiderRepository(ABC):
         pass
 
     @abstractmethod
-    def find_all(self) -> 'List[Rider]':
+    def find_all(self) -> "List[Rider]":
         """Fetches all riders from the database."""
         pass
-    
+
     @abstractmethod
-    def find_all_results_by_rider_ids(self, rider_ids: List[UUID]) -> Dict[UUID, List[RiderResultDTO]]:
+    def find_all_results_by_rider_ids(
+        self, rider_ids: List[UUID]
+    ) -> Dict[UUID, List[RiderResultDTO]]:
         """
         Fetches all point-scoring results for a given list of rider database IDs.
         Returns a dictionary mapping each rider_id to a list of their results.

@@ -1,10 +1,11 @@
 import os
 from logging.config import fileConfig
-from typing import Any
+from typing import Any, Dict, Optional, cast
 
 import sqlalchemy as sa
 from sqlalchemy import engine_from_config, pool
-from alembic import context
+
+from alembic import context  # type: ignore[attr-defined]
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -22,7 +23,9 @@ if DATABASE_URL:
 
 # Import metadata from the project
 # We avoid importing full app; only bring the metadata to autogenerate
-from procycling_scraper.scraping.infrastructure.database.schema import metadata  # noqa: E402
+from procycling_scraper.scraping.infrastructure.database.schema import (  # noqa: E402
+    metadata,
+)
 
 target_metadata = metadata
 
@@ -43,8 +46,11 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
+    cfg_section: Dict[str, Any] = cast(
+        Dict[str, Any], config.get_section(config.config_ini_section) or {}
+    )
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section),
+        cfg_section,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
@@ -63,7 +69,13 @@ def run_migrations_online() -> None:
             context.run_migrations()
 
 
-def include_object(object: Any, name: str, type_: str, reflected: bool, compare_to: Any) -> bool:
+def include_object(
+    object: Any,
+    name: Optional[str],
+    type_: str,
+    reflected: bool,
+    compare_to: Any,
+) -> bool:
     # Include enums and everything else by default
     return True
 

@@ -9,6 +9,7 @@ class RaceType(enum.Enum):
     """
     An enumeration to represent the type of a race.
     """
+
     ONE_DAY = "One-Day"
     STAGE_RACE = "Stage-Race"
 
@@ -30,6 +31,7 @@ class Race:
         race_type (RaceType): The type of the race.
         classifications (List[Classification]): A list of classifications for this race.
     """
+
     pcs_id: str
     name: str
     year: int
