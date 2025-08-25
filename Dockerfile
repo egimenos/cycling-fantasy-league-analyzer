@@ -11,6 +11,6 @@ COPY alembic.ini .
 COPY alembic/ ./alembic
 COPY src/ ./src
 
-RUN pip install -e .
+RUN pip install --no-cache-dir -e .
 
 CMD ["tail", "-f", "/dev/null"]
