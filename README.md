@@ -18,6 +18,7 @@ A Python application that scrapes race data from `procyclingstats.com` and provi
 - [Common Workflows](#common-workflows)
 - [Observability](#observability-loki--grafana)
 - [Testing](#testing)
+- [Production Deployment (Kamal)](#production-deployment-kamal)
 
 ## Prerequisites
 
@@ -297,9 +298,56 @@ Pytest runs inside the Docker app container. Tests live under the `tests/` folde
 
 ---
 
-⚠️ Important Notes:
+## Production Deployment (Kamal)
 
-- `make down` deletes all data volumes
-- Keep the API server running in a separate terminal
-- Scraping large datasets can take significant time
-- Check API documentation at `/docs` for detailed endpoint information
+This repo uses Kamal to build/push to GHCR and deploy to a single Docker host with a built-in reverse proxy.
+
+Important:
+
+- Kamal builds from the current Git HEAD and ignores uncommitted changes. Commit before deploying.
+- The app listens on env `PORT`. In prod we set `PORT=80` and expose via kamal-proxy.
+- We pass secrets via environment variables (ERB) in `config/deploy.yml`.
+
+### Prerequisites
+
+- Server reachable via SSH, Docker installed.
+- Set and export in your shell before commands:
+  - `export APP_SERVER='YOUR_SERVER_IP'`
+  - `export REGISTRY_USERNAME='your-gh-username'`
+  - `export REGISTRY_PASSWORD='your-ghcr-pat'` (PAT with `write:packages`, `read:packages`)
+  - `export POSTGRES_PASSWORD='strong-pass'`
+  - `export DATABASE_URL='postgresql+psycopg2://procycling:'"$POSTGRES_PASSWORD"'@procycling-scraper-postgres:5432/procycling'`
+
+### First-time setup
+
+```bash
+kamal setup
+# If Postgres accessory doesn't exist yet:
+kamal accessory boot postgres
+# Initialize schema
+kamal app exec -- python -m src.main db-init
+```
+
+### Deploy a new version
+
+```bash
+kamal deploy
+```
+
+Verify:
+
+- Health: `curl http://$APP_SERVER/health` and `/up`
+- Docs: `http://$APP_SERVER/docs`
+- Logs: `kamal app logs -f`
+
+### Database management
+
+- Initialize schema:
+  - `kamal app exec -- python -m src.main db-init`
+- Apply Alembic migrations (if you add them):
+  - `kamal app exec -- alembic upgrade head`
+
+### Rollback and versions
+
+- List versions: `kamal versions`
+- Roll back to previous: `kamal rollback`
