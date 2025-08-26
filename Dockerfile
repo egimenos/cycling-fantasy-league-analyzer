@@ -13,4 +13,5 @@ COPY src/ ./src
 
 RUN pip install --no-cache-dir -e .
 
-CMD ["tail", "-f", "/dev/null"]
+# Default command for production containers (honors PORT env; default 8000)
+CMD ["sh", "-c", "uvicorn procycling_scraper.analysis.infrastructure.api.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

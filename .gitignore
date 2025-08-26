@@ -216,3 +216,6 @@ secrets.json
 *.db
 *.sqlite
 *.sqlite3
+
+# Kamal local state & secrets
+.kamal/
