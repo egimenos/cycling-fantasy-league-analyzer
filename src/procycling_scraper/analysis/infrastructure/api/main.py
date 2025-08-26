@@ -33,6 +33,7 @@ def process_cyclists(
 
 
 @app.get("/health")
+@app.get("/up")
 def health() -> dict:
-    """Simple health endpoint."""
+    """Health endpoint used by both clients and kamal-proxy."""
     return {"status": "ok"}
