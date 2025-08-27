@@ -111,12 +111,16 @@ jobs:
       - name: Run DB migrations
         env:
           APP_SERVER: ${{ secrets.APP_SERVER }}
+          REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
         run: kamal app exec -- alembic upgrade head
 
       # Smoke test with rollback on failure
       - name: Smoke check and rollback on failure
         env:
           APP_SERVER: ${{ secrets.APP_SERVER }}
+          REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
         run: |
           set -e
           for i in {1..10}; do
