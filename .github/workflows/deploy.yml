@@ -40,9 +40,23 @@ jobs:
             const sha = context.payload.workflow_run.head_sha;
             const required = ["Tests", "Lint & Format", "Type Check (mypy)", "Security Scan", "Docker Build"];
             const { owner, repo } = context.repo;
-            const runs = await github.paginate(github.rest.actions.listWorkflowRunsForRepo, { owner, repo, head_sha: sha, per_page: 100 });
-            const ok = required.every(name => runs.find(r => r.name === name && r.head_sha === sha && r.conclusion === 'success'));
-            if (!ok) core.setFailed('Not all required workflows succeeded for ' + sha);
+
+            for (let i = 0; i < 10; i++) {
+              const runs = await github.paginate(github.rest.actions.listWorkflowRunsForRepo, { owner, repo, head_sha: sha, per_page: 100 });
+              const ok = required.every(name => runs.find(r => r.name === name && r.head_sha === sha && r.conclusion === 'success'));
+
+              if (ok) {
+                core.info('All required workflows succeeded for ' + sha);
+                return;
+              }
+
+              if (i < 9) {
+                core.info(`Not all required workflows succeeded yet. Retrying in 30 seconds... (${i + 1}/10)`);
+                await new Promise(r => setTimeout(r, 30000));
+              }
+            }
+
+            core.setFailed('Not all required workflows succeeded for ' + sha);
 
   deploy:
     needs: verify
