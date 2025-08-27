@@ -92,32 +92,31 @@ jobs:
             UserKnownHostsFile /dev/null
           EOF
 
+      - name: Prepare Kamal secrets file
+        run: |
+          install -m 700 -d .kamal
+          {
+            echo "DATABASE_URL=${{ secrets.DATABASE_URL }}"
+            echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}"
+          } > .kamal/secrets
+          chmod 600 .kamal/secrets
+
       - name: Deploy with Kamal
         env:
           APP_SERVER: ${{ secrets.APP_SERVER }}
           REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
           REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: kamal deploy
 
       - name: Run DB migrations
         env:
           APP_SERVER: ${{ secrets.APP_SERVER }}
-          REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
-          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: kamal app exec -- alembic upgrade head
 
       # Smoke test with rollback on failure
       - name: Smoke check and rollback on failure
         env:
           APP_SERVER: ${{ secrets.APP_SERVER }}
-          REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
-          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
           set -e
           for i in {1..10}; do
@@ -129,3 +128,7 @@ jobs:
           echo "Smoke check failed. Rolling back..."
           kamal rollback
           exit 1
+
+      - name: Cleanup secrets
+        if: always()
+        run: rm -f .kamal/secrets
