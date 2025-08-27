@@ -1,0 +1,113 @@
+name: Deploy (Kamal)
+
+on:
+  workflow_run:
+    workflows:
+      [
+        "Tests",
+        "Lint & Format",
+        "Type Check (mypy)",
+        "Security Scan",
+        "Docker Build",
+      ]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.get-sha.outputs.sha }}
+    steps:
+      - id: get-sha
+        run: |
+          SHA="${{ github.event.workflow_run.head_sha || github.sha }}"
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+      - name: Ensure required workflows succeeded
+        if: ${{ github.event_name == 'workflow_run' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const sha = context.payload.workflow_run.head_sha;
+            const required = ["Tests", "Lint & Format", "Type Check (mypy)", "Security Scan", "Docker Build"];
+            const { owner, repo } = context.repo;
+            const runs = await github.paginate(github.rest.actions.listWorkflowRunsForRepo, { owner, repo, head_sha: sha, per_page: 100 });
+            const ok = required.every(name => runs.find(r => r.name === name && r.head_sha === sha && r.conclusion === 'success'));
+            if (!ok) core.setFailed('Not all required workflows succeeded for ' + sha);
+
+  deploy:
+    needs: verify
+    if: ${{ needs.verify.result == 'success' }}
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.verify.outputs.sha }}
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+
+      - name: Install Kamal CLI
+        run: gem install kamal -v "~> 2.7"
+
+      - name: Setup SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          APP_SERVER: ${{ secrets.APP_SERVER }}
+        run: |
+          install -m 700 -d ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$APP_SERVER" >> ~/.ssh/known_hosts
+
+      - name: Deploy with Kamal
+        env:
+          APP_SERVER: ${{ secrets.APP_SERVER }}
+          REGISTRY_USERNAME: ${{ github.actor }}
+          REGISTRY_PASSWORD: ${{ github.token }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: kamal deploy
+
+      - name: Run DB migrations
+        env:
+          APP_SERVER: ${{ secrets.APP_SERVER }}
+          REGISTRY_USERNAME: ${{ github.actor }}
+          REGISTRY_PASSWORD: ${{ github.token }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: kamal app exec -- alembic upgrade head
+
+      # Smoke test with rollback on failure
+      - name: Smoke check and rollback on failure
+        env:
+          APP_SERVER: ${{ secrets.APP_SERVER }}
+          REGISTRY_USERNAME: ${{ github.actor }}
+          REGISTRY_PASSWORD: ${{ github.token }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -e
+          for i in {1..10}; do
+            if curl -fsS --max-time 5 http://"$APP_SERVER"/up > /dev/null; then
+              echo "Smoke check passed"; exit 0;
+            fi
+            echo "Waiting for app... ($i/10)"; sleep 3;
+          done
+          echo "Smoke check failed. Rolling back..."
+          kamal rollback
+          exit 1
