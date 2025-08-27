@@ -91,8 +91,8 @@ jobs:
       - name: Deploy with Kamal
         env:
           APP_SERVER: ${{ secrets.APP_SERVER }}
-          REGISTRY_USERNAME: ${{ github.actor }}
-          REGISTRY_PASSWORD: ${{ github.token }}
+          REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: kamal deploy
@@ -100,8 +100,8 @@ jobs:
       - name: Run DB migrations
         env:
           APP_SERVER: ${{ secrets.APP_SERVER }}
-          REGISTRY_USERNAME: ${{ github.actor }}
-          REGISTRY_PASSWORD: ${{ github.token }}
+          REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: kamal app exec -- alembic upgrade head
@@ -110,8 +110,8 @@ jobs:
       - name: Smoke check and rollback on failure
         env:
           APP_SERVER: ${{ secrets.APP_SERVER }}
-          REGISTRY_USERNAME: ${{ github.actor }}
-          REGISTRY_PASSWORD: ${{ github.token }}
+          REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
