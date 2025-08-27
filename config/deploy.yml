@@ -25,7 +25,8 @@ builder:
 env:
   clear:
     PORT: 80
-    DATABASE_URL: "<%= ENV['DATABASE_URL'] %>"
+  secret:
+    - DATABASE_URL
 
 # Use Traefik via kamal-proxy to expose the app on port 80 without a domain
 labels:
@@ -44,6 +45,7 @@ accessories:
       clear:
         POSTGRES_DB: procycling
         POSTGRES_USER: procycling
-        POSTGRES_PASSWORD: "<%= ENV['POSTGRES_PASSWORD'] %>"
+      secret:
+        - POSTGRES_PASSWORD
     volumes:
       - "/var/lib/procycling-scraper-postgres:/var/lib/postgresql/data"
